@@ -1,0 +1,16 @@
+[package]
+name = "awakening"
+version = "0.1.0"
+authors = ["xDotDash <xdotdash@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "2.33.0"
+lazy_static = "1.3.0"
+log = "0.4.7"
+regex = "1.1.9"
+reqwest = "0.9.18"
+serenity = "0.6.2"
+simple_logger = "1.3.0"
