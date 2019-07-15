@@ -11,7 +11,6 @@ extern crate reqwest;
 extern crate serenity;
 extern crate simple_logger;
 
-use std::ops::Index;
 use std::sync::Arc;
 
 use clap::{App, Arg};
@@ -23,7 +22,23 @@ use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::EventHandler;
 
-type RegexExecutor = (Regex, &'static (dyn for<'a> Fn(&'a Context, &'a Message) -> () + Sync));
+static SITE_WHITELIST: &[&str] = &[
+    "http://paste.gg/",
+    "http://paste.ee/",
+    "http://paste.feed-the-beast.com/",
+    "http://pastebin.com/",
+    "http://hastebin.com/",
+    "http://gist.github.com/",
+    "https://paste.gg/",
+    "https://paste.ee/",
+    "https://paste.feed-the-beast.com/",
+    "https://pastebin.com/",
+    "https://hastebin.com/",
+    "https://gist.github.com/",
+];
+
+type LogSearchHandler = &'static (dyn for<'a> Fn(&'a Context, &'a Message) -> () + Sync);
+type RegexExecutor = (Regex, LogSearchHandler);
 
 struct Handler {
     log_searches: Arc<Vec<RegexExecutor>>,
@@ -33,15 +48,17 @@ struct Handler {
 
 impl EventHandler for Handler {
     fn message(&self, ctx: Context, message: Message) {
-        for url_match in self.url_regex.find_iter(&message.content) {
-            let url = url_match.as_str();
+        for url in self.url_regex.find_iter(&message.content)
+            .map(|x| x.as_str())
+            .filter(|x| SITE_WHITELIST.iter().any(|site| x.starts_with(site)))
+            .take(5) {
 
             let response = self.http.get(url).send()
                 .and_then(|mut resp| resp.text())
                 .unwrap_or_default();
 
             for (regex, func) in self.log_searches.iter() {
-                if regex.is_match(response.as_str()) {
+                if regex.is_match(&response) {
                     func.call((&ctx, &message));
                 }
             }
@@ -134,7 +151,7 @@ fn issue_old_mixin(ctx: &Context, message: &Message) {
 fn exact_parts(parts: &[&str]) -> Regex {
     let mut result = String::new();
     result.push('(');
-    result.push_str(&parts.iter().map(|x| regex::escape(x)).collect::<Vec<String>>().join("|"));
+    result.push_str(&parts.iter().map(|&x| regex::escape(x)).collect::<Vec<String>>().join("|"));
     result.push(')');
     Regex::new(&result).unwrap()
 }
