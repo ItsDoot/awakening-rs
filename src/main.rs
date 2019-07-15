@@ -123,7 +123,7 @@ fn main() {
 
 fn issue_foamfix(ctx: &Context, message: &Message) {
     static FOAMFIX: &str =
-        "I've detected that your logs contain an error caused by using sponge and foamfix together. \
+        "I've detected that your logs contain an error caused by using Sponge and FoamFix together. \
          To fix this, disable the following settings by setting them to `false` in `config/foamfix.cfg`:\
          \n`B:optimizedBlockPos=false`\
          \n`B:patchChunkSerialization=false`";
